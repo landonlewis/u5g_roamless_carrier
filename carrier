@@ -38,6 +38,31 @@ usage() {
 # Optional host override
 [ -n "$2" ] && HOST="$2"
 
+# Map a numeric MNC to a human-readable carrier name
+carrier_name() {
+    case "$1" in
+        310410) echo "AT&T" ;;
+        310260) echo "T-Mobile" ;;
+        311480) echo "Verizon" ;;
+        *)      echo "Unknown carrier" ;;
+    esac
+}
+
+# Fetch the current carrier and annotate the numeric code with its name
+show_status() {
+    output="$(ssh "${U5G_USER}@${HOST}" 'atcli -o')"
+    rc=$?
+    [ $rc -ne 0 ] && { printf '%s\n' "$output"; return $rc; }
+
+    printf '%s\n' "$output"
+
+    # Pull the first 6-digit MNC out of the output and label it
+    mnc="$(printf '%s' "$output" | grep -oE '3[0-9]{5}' | head -n 1)"
+    if [ -n "$mnc" ]; then
+        echo "Carrier: $(carrier_name "$mnc") ($mnc)"
+    fi
+}
+
 # Resolve the AT+COPS command for the requested carrier
 COPS_CMD=""
 case "$1" in
@@ -45,11 +70,12 @@ case "$1" in
     att)     COPS_CMD='AT+COPS=1,2,\"310410\",7' ;;
     tmobile) COPS_CMD='AT+COPS=1,2,\"310260\",7' ;;
     verizon) COPS_CMD='AT+COPS=1,2,\"311480\",7' ;;
-    status)  ssh "${U5G_USER}@${HOST}" 'atcli -o'; exit $? ;;
+    status)  show_status; exit $? ;;
     *)       usage ;;
 esac
 
 # Switch carrier, wait for the modem to settle, then report the active network.
 # COPS_CMD is set by this script (not user input), so client-side expansion is intended.
 # shellcheck disable=SC2029
-ssh "${U5G_USER}@${HOST}" "atcli -t 60 -A \"$COPS_CMD\" && sleep 3 && atcli -o"
+ssh "${U5G_USER}@${HOST}" "atcli -t 60 -A \"$COPS_CMD\" && sleep 3" || exit $?
+show_status

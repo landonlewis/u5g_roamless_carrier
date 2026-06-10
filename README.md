@@ -160,7 +160,7 @@ The script SSHes into the U5G and sends an AT command to the modem via `atcli`:
 | AT&T | `AT+COPS=1,2,"310410",7` |
 | Verizon | `AT+COPS=1,2,"311480",7` |
 
-After switching, it waits 3 seconds and reports the active network to confirm the change took effect.
+After switching, it waits 3 seconds and reports the active network to confirm the change took effect. The script maps the modem's numeric MNC to a friendly carrier name, so status output looks like `Carrier: AT&T (310410)`.
 
 ---
 
@@ -186,5 +186,5 @@ Set up SSH key auth as described in Setup step 5.
 - Verify SSH works: `ssh <U5G_USER>@<U5G_HOST> 'echo connected'`
 - The requested carrier may not be available through your Roamless eSIM profile — try `auto` to reset, then contact Roamless support
 
-**Carrier shows a numeric code instead of a name (e.g. `310260`)**
-This is normal — it's T-Mobile's network identifier. The modem sometimes returns the numeric MNC instead of the carrier name.
+**Carrier shows a numeric code with no name (e.g. `310260`)**
+The script labels known carriers automatically (e.g. `Carrier: T-Mobile (310260)`). If you see a raw code with `Unknown carrier`, the modem returned an MNC the script doesn't recognize — the raw `atcli` output above it still shows the full network details.
