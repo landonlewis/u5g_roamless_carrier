@@ -54,12 +54,13 @@ show_status() {
     rc=$?
     [ $rc -ne 0 ] && { printf '%s\n' "$output"; return $rc; }
 
-    printf '%s\n' "$output"
-
     # Pull the first 6-digit MNC out of the output and label it
     mnc="$(printf '%s' "$output" | grep -oE '3[0-9]{5}' | head -n 1)"
     if [ -n "$mnc" ]; then
         echo "Carrier: $(carrier_name "$mnc") ($mnc)"
+    else
+        # Couldn't parse an MNC; show the raw output so nothing is lost
+        printf '%s\n' "$output"
     fi
 }
 
