@@ -24,12 +24,14 @@ fi
 HOST="$U5G_HOST"
 
 usage() {
-    echo "Usage: carrier [auto|att|tmobile|verizon|status] [host]"
+    echo "Usage: carrier [auto|att|tmobile|verizon|status|signal|info] [host]"
     echo "  auto     - Let Roamless pick the best network"
     echo "  att      - Force AT&T (310410)"
     echo "  tmobile  - Force T-Mobile (310260)"
     echo "  verizon  - Force Verizon (311480)"
     echo "  status   - Show current carrier"
+    echo "  signal   - Show current signal strength"
+    echo "  info     - Show carrier status and signal together"
     echo ""
     echo "  Optional: specify host as second argument (default: $HOST)"
     exit 1
@@ -59,9 +61,26 @@ show_status() {
     if [ -n "$mnc" ]; then
         echo "Carrier: $(carrier_name "$mnc") ($mnc)"
     else
-        # Couldn't parse an MNC; show the raw output so nothing is lost
         printf '%s\n' "$output"
     fi
+}
+
+# Fetch and display signal info.
+# The QMI device path (qrtr://3) is specific to the U5G's modem and may differ
+# across firmware/modem revisions. If `signal` stops working, re-check this path
+# on the device (e.g. `ls /dev/qcqmi*` or `qmicli -L`).
+show_signal() {
+    output="$(ssh "${U5G_USER}@${HOST}" 'qmicli -d qrtr://3 --nas-get-signal-info')"
+    rc=$?
+    printf '%s\n' "$output"
+    return $rc
+}
+
+# Show carrier status and signal together
+show_info() {
+    show_status
+    echo ""
+    show_signal
 }
 
 # Resolve the AT+COPS command for the requested carrier
@@ -72,6 +91,8 @@ case "$1" in
     tmobile) COPS_CMD='AT+COPS=1,2,\"310260\",7' ;;
     verizon) COPS_CMD='AT+COPS=1,2,\"311480\",7' ;;
     status)  show_status; exit $? ;;
+    signal)  show_signal; exit $? ;;
+    info)    show_info;   exit $? ;;
     *)       usage ;;
 esac
 
@@ -79,4 +100,4 @@ esac
 # COPS_CMD is set by this script (not user input), so client-side expansion is intended.
 # shellcheck disable=SC2029
 ssh "${U5G_USER}@${HOST}" "atcli -t 60 -A \"$COPS_CMD\" && sleep 3" || exit $?
-show_status
+show_info

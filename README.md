@@ -118,6 +118,8 @@ source ~/.zshrc
 | Command | Description |
 |---------|-------------|
 | `status` | Show the currently connected carrier |
+| `signal` | Show current signal strength |
+| `info` | Show carrier status and signal together |
 | `auto` | Let Roamless automatically select the best carrier |
 | `tmobile` | Force T-Mobile (MNC: 310260) |
 | `att` | Force AT&T (MNC: 310410) |
@@ -127,6 +129,8 @@ source ~/.zshrc
 
 ```sh
 ./carrier status          # Check current carrier
+./carrier signal          # Check signal strength
+./carrier info            # Carrier + signal together
 ./carrier tmobile         # Switch to T-Mobile
 ./carrier verizon         # Switch to Verizon
 ./carrier att             # Switch to AT&T
@@ -161,6 +165,14 @@ The script SSHes into the U5G and sends an AT command to the modem via `atcli`:
 | Verizon | `AT+COPS=1,2,"311480",7` |
 
 After switching, it waits 3 seconds and reports the active network to confirm the change took effect. The script maps the modem's numeric MNC to a friendly carrier name, so status output looks like `Carrier: AT&T (310410)`.
+
+### Status, signal, and info
+
+- `status` reads the active carrier via `atcli -o` and prints the labeled name.
+- `signal` queries the modem directly with `qmicli -d qrtr://3 --nas-get-signal-info` to report signal strength (RSSI, RSRP, SNR, etc.).
+- `info` runs both, showing carrier and signal in one view. This is also what's shown automatically after a carrier switch.
+
+> **Note:** The `signal` command uses the QMI device path `qrtr://3`, which is specific to the U5G's modem. If `signal` stops working after a firmware update, that path may have changed — check it on the device with `qmicli -L` or `ls /dev/qcqmi*`.
 
 ---
 
