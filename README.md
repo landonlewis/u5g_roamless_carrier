@@ -2,6 +2,8 @@
 
 A shell script for switching the cellular carrier on a UniFi U5G-US backup device running a Roamless eSIM. Run from any Mac or Linux machine on the same network.
 
+> **US carriers only:** This script currently supports US carriers (AT&T, T-Mobile, Verizon) only. Contributions to add non-US carrier support are welcome — see [Contributing](#contributing).
+
 ## Background
 
 The UniFi U5G-US uses an eSIM with Roamless, which by default selects the carrier automatically — often landing on AT&T. This script lets you manually force a specific carrier (T-Mobile, Verizon, or AT&T) or return to automatic selection.
@@ -200,3 +202,17 @@ Set up SSH key auth as described in Setup step 5.
 
 **Carrier shows a numeric code with no name (e.g. `310260`)**
 The script labels known carriers automatically (e.g. `Carrier: T-Mobile (310260)`). If you see a raw code with `Unknown carrier`, the modem returned an MNC the script doesn't recognize — the raw `atcli` output above it still shows the full network details.
+
+---
+
+## Contributing
+
+This script currently hardcodes US carriers (AT&T, T-Mobile, Verizon) by their MCC/MNC codes. Support for carriers in other countries is welcome.
+
+To add a carrier:
+
+1. Add a new entry to the `case` statement in the `carrier` script with the target carrier's MCC/MNC code (the `AT+COPS=1,2,"<MCCMNC>",7` format).
+2. Add the same code to the `carrier_name()` function so status output shows a friendly name.
+3. Update the usage table and examples in this README.
+
+Open an issue or pull request with your changes. Please note which country and carrier you tested against, since eSIM/Roamless availability varies by region.
